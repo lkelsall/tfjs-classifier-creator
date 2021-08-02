@@ -1,6 +1,8 @@
 const mobilenetModule = require('@tensorflow-models/mobilenet');
 const knnClassifier = require('@tensorflow-models/knn-classifier');
 const { trainClassFromImages, tensorFromJpg } = require('./utils');
+const { dataSync } = require('@tensorflow/tfjs-node');
+const fs = require('fs');
 
 const dogNames = [
   'Labrador Retriever',
@@ -36,13 +38,18 @@ const createClassifierData = async (dogNames) => {
     );
   });
 
-  const tensor = tensorFromJpg('./beagleimg.jpg');
+  const datasetTensor = classifier.getClassifierDataset();
+  const datasetObject = {};
+  Object.keys(datasetTensor).forEach((key) => {
+    const data = datasetTensor[key].dataSync();
 
-  const logits = model.infer(tensor);
-
-  classifier.predictClass(logits).then((result) => {
-    console.log(result);
+    datasetObject[key] = Array.from(data);
   });
+  const jsonStr = JSON.stringify(datasetObject);
+
+  fs.writeFileSync('./datasetString.txt', jsonStr);
+
+  return jsonStr;
 };
 
 createClassifierData(dogNames);
